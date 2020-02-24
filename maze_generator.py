@@ -1,123 +1,93 @@
-import pygame
-import sys
-from random import randint
+import pygame, sys, random
 
-WIDTH = 1000
-HEIGHT = 1000
+WIDTH  = 600
+HEIGHT = 600
 
-cell_size = 20
+cell_size = 15
 
-cols =  WIDTH/cell_size
-rows =  HEIGHT/cell_size
+cols = WIDTH/cell_size
+rows = HEIGHT/cell_size
 
-grid = []
-
-screen = pygame.display.set_mode((WIDTH + cols, HEIGHT + rows))
+screen = pygame.display.set_mode((WIDTH + 2, HEIGHT + 2))
 clock = pygame.time.Clock()
+pygame.display.set_caption("Maze Generator")
+
+grid  = []
+stack = []
+
 
 class Cell:
     def __init__(self, i, j):
         self.i = i
         self.j = j
-        self.walls = [True, True, True, True]
         self.visited = False
+        self.walls = [True, True, True, True]
+        self.highlight = False
 
+    def pick_a_random_element(self, list):
+        if len(list) > 0:
+            return random.choice(list)
+        else:
+            return None
 
-    def checkNeighbors(self, grid):
+    def get_neighbors(self, maze_grid):
         self.neighbors = []
 
-        try:
-            top  = grid[self.i][self.j - 1]
-            if (top.i >= 0 and top.i <= cols - 1):
-                if(top.j >= 0 and top.j <= rows - 1):
-                    if (not top.visited):
-                        self.neighbors.append(top)
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
+        #Check if is the top neighbor a valid one
+        if self.i >= 0 and self.j - 1 >= 0 and self.i < cols and self.j - 1 < rows:
+            top = maze_grid[self.i][self.j - 1]
+            if top.visited == False:
+                self.neighbors.append(top)
 
-        except:
+        #Check if is the right neighbor a valid one
+        if self.i + 1 >= 0 and self.j >= 0 and self.i + 1 < cols and self.j < rows:
+            right = maze_grid[self.i + 1][self.j]
+            if right.visited == False:
+                self.neighbors.append(right)
+
+        #Check if is the bottom neighbor a valid one
+        if self.i >= 0 and self.j + 1 >= 0 and self.i < cols and self.j + 1 < rows:
+            bottom = maze_grid[self.i][self.j + 1]
+            if bottom.visited == False:
+                self.neighbors.append(bottom)
+
+        #Check if is the left neighbor a valid one
+        if self.i - 1 >= 0 and self.j >= 0 and self.i - 1 < cols and self.j < rows:
+            left = maze_grid[self.i - 1][self.j]
+            if left.visited == False:
+                self.neighbors.append(left)
+
+        pick_one = self.pick_a_random_element(self.neighbors)
+
+        if pick_one:
+            return pick_one
+        else:
             pass
-
-
-        try:
-            right  = grid[self.i + 1][self.j]
-            if (right.i >= 0 and right.i <= cols):
-                if(right.j >= 0 and right.j <= rows):
-                    if (not right.visited):
-                        self.neighbors.append(right)
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
-
-        except:
-            pass
-
-        try:
-            bottom = grid[self.i][self.j + 1]
-            if (bottom.i >= 0 and bottom.i <= cols):
-                if(bottom.j >= 0 and bottom.j <= rows):
-                    if (not bottom.visited):
-                        self.neighbors.append(bottom)
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
-
-        except:
-            pass
-
-        try:
-            left   = grid[self.i - 1][self.j]
-            if (left.i >= 0 and left.i <= cols):
-                if(left.j >= 0 and left.j <= rows):
-                    if (not left.visited):
-                        self.neighbors.append(left)
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
-        except:
-            pass
-
-
-
-        if (len(self.neighbors) >= 0):
-            try:
-                r = randint(0,len(self.neighbors)- 1)
-                return self.neighbors[r]
-            except:
-                return False
 
     def show(self, surface):
         self.surface = surface
-        x = self.i * (cell_size + 1)
-        y = self.j * (cell_size + 1)
 
-        if (self.walls[0]):
-            pygame.draw.line(self.surface, (pygame.Color('black')),  (x,y)                          ,   (x + cell_size, y)             )
-
-        if (self.walls[1]):
-            pygame.draw.line(self.surface, (pygame.Color('black')),  (x + cell_size, y)             ,   (x + cell_size, y + cell_size) )
-
-        if (self.walls[2]):
-            pygame.draw.line(self.surface, (pygame.Color('black')),  (x + cell_size, y + cell_size) ,   (x, y + cell_size)             )
-
-        if (self.walls[3]):
-            pygame.draw.line(self.surface, (pygame.Color('black')),  (x, y + cell_size)             ,   (x , y)                        )
+        x = self.i * cell_size
+        y = self.j * cell_size
 
         if self.visited:
-            pygame.draw.rect(self.surface, (pygame.Color('purple')), (x, y, cell_size, cell_size))
+            pygame.draw.rect(self.surface, (pygame.Color('white')), (x, y, cell_size, cell_size))
+
+        if self.highlight:
+            pygame.draw.rect(self.surface, (pygame.Color('black')), (x, y, cell_size, cell_size))
+
+        if self.walls[0]:
+            pygame.draw.line(self.surface, (pygame.Color('black')), (x,y), (x + cell_size, y),3)
+
+        if self.walls[1]:
+            pygame.draw.line(self.surface, (pygame.Color('black')), (x + cell_size, y), (x + cell_size, y + cell_size),3)
+
+        if self.walls[2]:
+            pygame.draw.line(self.surface, (pygame.Color('black')), (x + cell_size, y + cell_size), (x, y + cell_size),3)
+
+        if self.walls[3]:
+            pygame.draw.line(self.surface, (pygame.Color('black')), (x, y + cell_size), (x , y),3)
+
 
 def createDataStructure():
     for i in range(cols):
@@ -126,37 +96,79 @@ def createDataStructure():
             new.append(Cell(i,j))
         grid.append(new)
 
+
 def draw():
-    screen.fill(pygame.Color('white'))
+    screen.fill(pygame.Color('grey'))
 
     for i in range(cols):
         for j in range(rows):
             grid[i][j].show(screen)
 
 
-def update(atual):
-    atual.visited = True
+def remove_wall(current, next):
+    x = current.i  - next.i
 
-    next = atual.checkNeighbors(grid)
+    if x == 1:
+        current.walls[3] = False
+        next.walls[1] = False
 
-    if next:
-        next.visited = True
-        atual = next
-
-    return atual
-
-createDataStructure()
-pygame.init()
-
-current = grid[0][0]
+    else:
+        if x == -1:
+            current.walls[1] = False
+            next.walls[3] = False
 
 
-while 1 :
-    clock.tick(5)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
+    y = current.j  - next.j
 
-    current = update(current)
-    draw()
-    pygame.display.update()
+    if y == 1:
+        current.walls[0] = False
+        next.walls[2] = False
+
+    else:
+        if y == -1:
+            current.walls[2] = False
+            next.walls[0] = False
+
+
+def get_next_cell(current_cell):
+    if current_cell:
+        current_cell.visited = True
+        current_cell.highlight = False
+
+        next = current_cell.get_neighbors(grid)
+
+        if next:
+            next.visited = True
+            stack.append(current_cell)
+            remove_wall(current_cell, next)
+            return next
+
+        else:
+            if len(stack) > 0:
+                current_cell = stack.pop()
+                return current_cell
+
+            else:
+                return current_cell
+
+
+def main():
+    createDataStructure()
+
+    pygame.init()
+    current = grid[0][0]
+
+    while True:
+        clock.tick(30)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        draw()
+        current = get_next_cell(current)
+        current.highlight = True
+        pygame.display.update()
+
+
+if __name__ == '__main__':
+    main()
